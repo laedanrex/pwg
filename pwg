@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+
+PWG_SIZE=32
+PWG_REGEX=""
+
+# "arg" "default" "allowed chars" "documentation"
+# !"#$%&'()*+,-./:;<=>?@
+OPTIONS_MAP=(
+  "--help"       "true"  ""               "show this.\n\t\t\tfor autocompletion add to bashrc:\n\t\t\tsource <(pwg --init-completion)"
+  "--no-upper"   "true"  "A-Z"            "no uppercase letters"
+  "--spaces"     "false" " "              "with spaces"
+  "--no-lower"   "true"  "a-z"            "no lowercase letters"
+  "--no-number"  "true"  "0-9"            "no numbers"
+  "--no-special" "true"  "@#$%&_+-="      "no special characters"
+  "--strange"    "false" "!^*,.?~:\";<>'" "with strange characters"
+  )
+
+function printInitCompletionFunction {
+  echo "
+  if [ -n \"\$ZSH_VERSION\" ]; then
+    autoload bashcompinit
+    bashcompinit
+  fi
+
+  _pwg_complete() {
+    local cur
+    cur=\${COMP_WORDS[COMP_CWORD]}
+    COMPREPLY=( \$( compgen -W \"\$(pwg --completion)\" -- \$cur ) )
+  }
+
+  complete -F _pwg_complete pwg
+  "
+}
+
+function printCompletionWords {
+  replyWords=()
+  for (( i=0; i<=${#OPTIONS_MAP[@]}; i+=4 )) do replyWords+=("${OPTIONS_MAP[$i]}"); done;
+  echo "${replyWords[*]}"
+}
+
+function setArgToOpposite {
+  for (( i=0; i<=${#OPTIONS_MAP[@]}; i+=4 )) do
+    if [ "$1" = "${OPTIONS_MAP[$i]}" ]; then
+      if [ "${OPTIONS_MAP[$((i+1))]}" = "false" ];
+      then OPTIONS_MAP[$((i+1))]="true";
+      else OPTIONS_MAP[$((i+1))]="false";
+      fi;
+      #echo "${OPTIONS_MAP[$i]} ${OPTIONS_MAP[((i+1))]} ${OPTIONS_MAP[((i+2))]} ${OPTIONS_MAP[((i+3))]}"
+    fi;
+  done;
+}
+
+function setRegex {
+  for (( i=1; i<=${#OPTIONS_MAP[@]}; i+=4 )) do
+    if [ "${OPTIONS_MAP[$i]}" = "true" ]; then
+      PWG_REGEX+="${OPTIONS_MAP[((i+1))]}"
+    fi;
+  done;
+}
+
+function setSize {
+  re='^[0-9]+$'
+  if ! [[ $1 =~ $re ]] ; then
+    echo "Error: $1 not a number. See --help" >&2; exit 1
+  fi
+  PWG_SIZE=$1
+}
+
+function printHelp {
+  help="PassWordGenerator: pwg <size>\n"
+  for (( i=0; i<${#OPTIONS_MAP[@]}; i+=4 )) do
+    help+="\t${OPTIONS_MAP[$i]}   \t${OPTIONS_MAP[((i+3))]}\n"
+  done;
+  help+="\t<size>\t\tsize of the password, default=$PWG_SIZE\n"
+  echo -ne "$help"
+}
+
+function setOptions {
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+        --init-completion)
+          printInitCompletionFunction
+          exit 0
+        ;;
+        --completion)
+          printCompletionWords
+          exit 0
+        ;;
+        --help)
+          printHelp
+          exit 0
+        ;;
+        -*)
+          setArgToOpposite $1
+        ;;
+        *)
+          setSize $1
+        ;;
+    esac
+    shift
+  done
+}
+
+setOptions $@
+setRegex
+echo "$(LC_CTYPE=C tr -dc "$PWG_REGEX" < /dev/urandom | head -c $PWG_SIZE)"
