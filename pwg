@@ -4,14 +4,14 @@ PWG_SIZE=32
 PWG_REGEX=""
 
 # "arg" "default" "allowed chars" "documentation"
-# !"#$%&'()*+,-./:;<=>?@
+# !"#$%&'()*+,\-./:;<=>?@
 OPTIONS_MAP=(
   "--help"       "true"  ""               "show this.\n\t\t\tfor autocompletion add to bashrc:\n\t\t\tsource <(pwg --init-completion)"
   "--no-upper"   "true"  "A-Z"            "no uppercase letters"
   "--spaces"     "false" " "              "with spaces"
   "--no-lower"   "true"  "a-z"            "no lowercase letters"
   "--no-number"  "true"  "0-9"            "no numbers"
-  "--no-special" "true"  "@#$%&_+-="      "no special characters"
+  "--no-special" "true"  "@#$%&_+\-="     "no special characters"
   "--strange"    "false" "!^*,.?~:\";<>'" "with strange characters"
   )
 
@@ -103,4 +103,5 @@ function setOptions {
 
 setOptions $@
 setRegex
+#echo $PWG_REGEX
 echo "$(LC_CTYPE=C tr -dc "$PWG_REGEX" < /dev/urandom | head -c $PWG_SIZE)"
