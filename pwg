@@ -8,11 +8,12 @@ PWG_REGEX=""
 OPTIONS_MAP=(
   "--help"         "false" ""                   "show this.\n\t\t\tfor autocompletion add to bashrc:\n\t\t\tsource <(pwg --init-completion)"
   "--no-upper"     "true"  "A-Z"                "no uppercase letters"
-  "--with-spaces"  "false" " "                  "with spaces"
   "--no-lower"     "true"  "a-z"                "no lowercase letters"
   "--no-number"    "true"  "0-9"                "no numbers"
   "--no-special"   "true"  "@#$%&_+\-=!?.,;:)(" "no special characters"
   "--with-strange" "false" "\\*\/^~'\"\`{}[]"   "with strange characters"
+  "--with-spaces"  "false" " "                  "with spaces"
+  "--copy"         "false" ""                   "will copy to clipboard rather than showing the password (pbcopy on mac and xclip on linux)"
   )
 
 function printInitCompletionFunction {
@@ -75,6 +76,25 @@ function printHelp {
   echo -ne "$help"
 }
 
+function copyToClipboard {
+  platform=`uname`
+  case $platform in
+    Darwin)
+      echo -n $1 | pbcopy
+    ;;
+    Linux)
+      echo -n $1 | xclip
+    ;;
+    #FreeBSD etc...?
+    *)
+      # 1 = false
+      return 1
+    ;;
+  esac
+  # 0 = true
+  return 0
+}
+
 function setOptions {
   while [[ $# -gt 0 ]]; do
     case $1 in
@@ -90,6 +110,9 @@ function setOptions {
           printHelp
           exit 0
         ;;
+        --copy)
+          COPY_TO_CLIPBOARD=true
+        ;;
         -*)
           setArgToOpposite $1
         ;;
@@ -104,4 +127,5 @@ function setOptions {
 setOptions $@
 setRegex
 #echo $PWG_REGEX
-echo "$(LC_CTYPE=C tr -dc "$PWG_REGEX" < /dev/urandom | head -c $PWG_SIZE)"
+PASSWORD="$(LC_CTYPE=C tr -dc "$PWG_REGEX" < /dev/urandom | head -c $PWG_SIZE)";
+[ -n "${COPY_TO_CLIPBOARD}" ] && copyToClipboard "$PASSWORD" || echo "$PASSWORD"
