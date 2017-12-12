@@ -1,0 +1,34 @@
+### Java
+*.class
+*.jar
+*.war
+*.ear
+
+### Jenv
+.java-version
+
+### Maven
+target
+pom.xml.versionsBackup
+
+### Eclipse settings
+.classpath
+.project
+.settings
+
+### IntelliJ Idea settings
+.idea
+*.iml
+*.ipr
+*.iws
+
+### Misc
+*.DS_Store
+*.swp
+
+### Error logs
+*.log
+
+### Rsync files for local
+rsync-data
+
